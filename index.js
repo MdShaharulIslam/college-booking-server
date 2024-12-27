@@ -23,7 +23,7 @@ const client = new MongoClient(uri, {
   },
 });
 
-// Middleware to set Keep-Alive header
+// Middleware to set Keep-Alive headers
 app.use((req, res, next) => {
   res.setHeader("Connection", "keep-alive");
   res.setHeader("Keep-Alive", "timeout=5, max=1000");
@@ -86,15 +86,17 @@ async function run() {
       const result = await collegesCollection.find(query).toArray();
       res.send(result);
     });
+
+    // Get college details by ID
     app.get('/colleges/:id', async (req, res) => {
       try {
-        const college = await College.findById(req.params.id); // Fetch the college from the database using the ID
+        const college = await collegesCollection.findOne({ _id: new MongoClient.ObjectId(req.params.id) });
         if (!college) {
           return res.status(404).json({ message: "College not found" });
         }
-        res.json(college); // Return the college details
+        res.json(college);
       } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "Server error", error: err.message });
       }
     });
 
@@ -109,6 +111,7 @@ async function run() {
       const reviews = await reviewCollection.find().toArray();
       res.send(reviews);
     });
+
   } catch (error) {
     console.error("Failed to connect to MongoDB:", error);
   }
@@ -122,10 +125,11 @@ app.get("/", (req, res) => {
 
 // Create and start the HTTP server
 const server = http.createServer(app);
+
+// Set Keep-Alive and timeout headers for server
+server.keepAliveTimeout = 5000;  // Keep-Alive timeout in milliseconds
+server.headersTimeout = 10000;   // Timeout for headers
+
 server.listen(port, () => {
   console.log(`College booking is running on port ${port}`);
 });
-
-// Server Keep-Alive settings
-server.keepAliveTimeout = 5000;
-server.headersTimeout = 10000;
