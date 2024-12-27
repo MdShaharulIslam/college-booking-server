@@ -86,6 +86,17 @@ async function run() {
       const result = await collegesCollection.find(query).toArray();
       res.send(result);
     });
+    app.get('/colleges/:id', async (req, res) => {
+      try {
+        const college = await College.findById(req.params.id); // Fetch the college from the database using the ID
+        if (!college) {
+          return res.status(404).json({ message: "College not found" });
+        }
+        res.json(college); // Return the college details
+      } catch (err) {
+        res.status(500).json({ message: "Server error" });
+      }
+    });
 
     // Review APIs
     app.post("/reviews", async (req, res) => {
